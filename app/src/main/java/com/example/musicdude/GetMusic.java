@@ -28,8 +28,6 @@ public class GetMusic implements ActivityCompat.OnRequestPermissionsResultCallba
     Context context;
 
     public List<MusicModel> getAllAudioFromDevice(Context context) {
-
-
         this.context=context;
         final List<MusicModel> tempAudioList = new ArrayList<>();
 
