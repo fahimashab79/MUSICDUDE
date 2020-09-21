@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaPlayer;
@@ -21,7 +22,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,89 +38,67 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewHelpe
 
 
     private RecyclerView recyclerView;
-
-
     public  TextView songname;
     public TextView artist;
     private GetMusic getMusic;
     private ModelClass modelClass;
-
-
-
+    private SharedPreferences sharedPreferences;
+   private RecyclerViewHelper recyclerViewHelper;
     private static MainActivity instance;
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         instance = this;
-        Log.i("On create called","called");
-
         modelClass=ModelClass.getInstance();
         getMusic =new GetMusic();
-
-
-
+        sharedPreferences=this.getSharedPreferences("com.example.musicdude",MODE_PRIVATE);
         modelClass.setSongsmodel(getMusic.getAllAudioFromDevice(MainActivity.this));
         songname=(TextView)findViewById(R.id.songName);
         artist=(TextView)findViewById(R.id.songArtist);
         recyclerView=findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        RecyclerViewHelper recyclerViewHelper=new RecyclerViewHelper(modelClass.getSongsmodel(),getApplicationContext(),this);
+        recyclerViewHelper=new RecyclerViewHelper(modelClass.getSongsmodel(),getApplicationContext(),this);
         recyclerView.setAdapter(recyclerViewHelper);
-    }
-    public static MainActivity getInstance() {
-        return instance;
-    }
+        int value=sharedPreferences.getInt("index",-1);
+        if(value!=-1){
 
+            modelClass.setCurrentsongno(value);
+            modelClass.setGlobalmodel(modelClass.getSongsmodel().get(value));
+            songname.setText(modelClass.getGlobalmodel().getAudioName());
+            artist.setText(modelClass.getGlobalmodel().getAudioArtist());
+            modelClass.setRunning(false);
+            modelClass.setLength(0);
+            try {
 
-    @Override
-    protected void onStart() {
+                modelClass.setGlobalMediaplayer(new MediaPlayer());
+                modelClass.getGlobalMediaplayer().setDataSource(modelClass.getGlobalmodel().getAudioPath());
+                modelClass.getGlobalMediaplayer().prepare();
+                int duration=sharedPreferences.getInt("duration",0);
+                Log.i("duration",String.valueOf(duration));
+                if(duration!=0)
+                    modelClass.getGlobalMediaplayer().seekTo(duration);
 
+            }catch (Exception e)
+            {
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
 
-
-        super.onStart();
-    }
-
-    @Override
-    protected void onResume() {
-        Log.i("On Resume","called");
-
-
-        super.onResume();
-
-
-
-            Log.i("On complete called","called");
-
+            }
 
         }
 
 
-    @Override
-    protected void onPause() {
-        Log.i("On pause called","called");
-
-        super.onPause();
     }
-
+    public static MainActivity getInstance() {
+        return instance;
+    }
     @Override
     protected void onDestroy() {
-        Log.i("On destroy called","called");
+        Log.i("On destroy called",String.valueOf(modelClass.getGlobalMediaplayer().getCurrentPosition()/1000));
         super.onDestroy();
-    }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.i("On stop called","called");
-
-
-
+        sharedPreferences.edit().putInt("duration",modelClass.getGlobalMediaplayer().getCurrentPosition()/1000).apply();
     }
 
     public void gotoMusicScreen(View view)
@@ -130,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewHelpe
         modelClass.setGlobalmodel(modelClass.getSongsmodel().get(position));
         songname.setText(modelClass.getGlobalmodel().getAudioName());
         artist.setText(modelClass.getGlobalmodel().getAudioArtist());
+        sharedPreferences.edit().putInt("index",position).apply();
         modelClass.setRunning(false);
         modelClass.setLength(0);
         try {
@@ -196,6 +181,26 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewHelpe
         playSongContent(position);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater=getMenuInflater();
+        inflater.inflate(R.menu.search_menu,menu);
+        MenuItem searchItem=menu.findItem(R.id.action_search);
+        SearchView searchView=(SearchView)searchItem.getActionView();
+        searchView.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                return false;
+            }
 
+            @Override
+            public boolean onQueryTextChange(String s) {
+                recyclerViewHelper.getFilter().filter(s);
+                return false;
+            }
+        });
 
+        return true;
+    }
 }

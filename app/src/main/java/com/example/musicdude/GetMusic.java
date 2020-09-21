@@ -54,6 +54,8 @@ public class GetMusic implements ActivityCompat.OnRequestPermissionsResultCallba
 
                 String name = path.substring(path.lastIndexOf("/"));
                 name=name.replaceFirst("/","");
+                name=name.replace("_"," ");
+                name=name.replace("-"," ");
                 MusicModel musicModel=new MusicModel(path,name,artist,album);
                 tempAudioList.add(musicModel);
                 //Log.i("Name:",name);

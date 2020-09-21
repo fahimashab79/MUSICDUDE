@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
@@ -39,6 +40,8 @@ public class MusicScreen extends AppCompatActivity {
    private MediaPlayer mediaPlayer;
    private ModelClass modelClass;
 
+
+
     @SuppressLint("LongLogTag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +52,7 @@ public class MusicScreen extends AppCompatActivity {
         registerReceiver(broadcastReceiver, intentFilter);
         modelClass=ModelClass.getInstance();
 
-        Log.i("value of play",String.valueOf(modelClass.isPlay()));
+
         musicModel=modelClass.getGlobalmodel();
         mediaPlayer= modelClass.getGlobalMediaplayer();
         musicName=findViewById(R.id.songname);
@@ -118,7 +121,7 @@ public class MusicScreen extends AppCompatActivity {
         int totaltime=mediaPlayer.getDuration()/1000;
         String firstpart=String.valueOf( totaltime/60);
         String secondPart=String.valueOf(totaltime%60);
-        Log.i("totaltime",String.valueOf(totaltime));
+        //Log.i("totaltime",String.valueOf(totaltime));
         if(firstpart.length()<=1){
             firstpart="0"+firstpart;
         }
@@ -178,6 +181,9 @@ public class MusicScreen extends AppCompatActivity {
 
 
     public void pauseClick(View view){
+
+
+
         if(modelClass.isPlay()==false){
 
           Intent intent=new Intent(MusicScreen.this,musicService.class);
@@ -198,7 +204,7 @@ public class MusicScreen extends AppCompatActivity {
   public void seekForward(View view)
   {
 
-      if(modelClass.getCurrentsongno()==modelClass.getSongsmodel().size()-1)
+      if(modelClass.getCurrentsongno()==(modelClass.getSongsmodel().size()-1))
       {
           modelClass.setCurrentsongno(0);
       }
